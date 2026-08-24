@@ -1,2 +1,2 @@
 # uoft_guide
-Guides for uoft cs and finance students
+Guide for uoft cs students

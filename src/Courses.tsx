@@ -472,19 +472,11 @@ export default function Courses() {
 
       {plan && plan.graph.nodes.length > 0 && !error && (
         <div className="section">
-          <div className="section-label">Prerequisite graph</div>
+          <div className="section-label">Your path</div>
           <ul className="legend">
             <li>
               <span className="swatch is-completed" aria-hidden="true" />
               Completed
-            </li>
-            <li>
-              <span className="swatch is-option" aria-hidden="true" />
-              Takeable now
-            </li>
-            <li>
-              <span className="swatch is-pending" aria-hidden="true" />
-              Still blocked
             </li>
             <li>
               <span className="swatch is-goal" aria-hidden="true" />
@@ -498,8 +490,8 @@ export default function Courses() {
             onSelect={setSelected}
           />
           <div className="field-hint">
-            Each row sits one step further along the prerequisite chain. Rows read top to bottom:
-            take the top ones first.
+            Only the courses you picked, chained by prerequisite. Each row sits one step further
+            along than the one above it.
           </div>
         </div>
       )}

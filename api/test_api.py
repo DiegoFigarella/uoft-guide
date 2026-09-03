@@ -83,14 +83,21 @@ def check() -> None:
                                             'target': 'CSC207H1'}).json()
         assert second['eligible'] and [o['code'] for o in second['options']] == ['CSC207H1'], second
         assert second['credits'] == 1.0, second
+        # The graph is only what the student picked, in the order it chains up.
         depth = {node['code']: node['depth'] for node in second['graph']['nodes']}
-        # The graph starts where the student is: CSC148H1 satisfies the branch,
-        # so what sits behind it is not drawn.
-        assert depth['CSC148H1'] == 0 and depth['CSC207H1'] > depth['CSC148H1'], depth
-        assert 'CSC108H1' not in depth, depth
+        assert depth == {'CSC108H1': 0, 'CSC148H1': 1, 'CSC207H1': 2}, depth
         state = {node['code']: node['state'] for node in second['graph']['nodes']}
         assert state['CSC148H1'] == 'completed' and state['CSC207H1'] == 'option', state
         assert {'from': 'CSC148H1', 'to': 'CSC207H1'} in second['graph']['edges'], second
+
+        # An unrelated course on the transcript is not part of the path.
+        noisy = client.post('/plan', json={'completed': ['CSC108H1', 'ANT100Y1'],
+                                           'target': 'CSC207H1'}).json()
+        assert {node['code'] for node in noisy['graph']['nodes']} == {'CSC108H1', 'CSC207H1'}, noisy
+        # Nothing completed is a direct prerequisite of the target, and it still
+        # sits below what has been taken rather than beside it.
+        assert {node['code']: node['depth'] for node in noisy['graph']['nodes']} == {
+            'CSC108H1': 0, 'CSC207H1': 1}, noisy
 
         # Target already done.
         done = client.post('/plan', json={'completed': ['CSC207H1'],

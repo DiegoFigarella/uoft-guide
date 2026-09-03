@@ -167,17 +167,30 @@ def plan(request: PlanRequest) -> dict:
     again with it added to `completed`. `reached` means the target is done, and
     empty `options` with the target unreached is a dead end: the prerequisites
     that are left sit outside this dataset or are credit conditions.
+
+    `graph` is the path so far: the completed courses that lead to the target,
+    the target itself, and the prerequisite edges between them.
     """
     target = vertex(request.target).code
     completed = {code.strip().upper() for code in request.completed}
     completed = {code for code in completed if code in graph().vertices}
 
     options = get_next_needed_courses(graph(), target, completed)
-    # Completed courses that lie on a path to the target are already part of
-    # relevant; the rest of a transcript is not, and would only crowd the graph.
-    relevant = get_relevant_courses(graph(), target, completed) | options
-    edges = subgraph_edges(relevant)
-    node_depths = depths(relevant, edges)
+
+    # The graph is the path the student has actually built: the courses they
+    # picked that lead to the target, plus the target. Alternatives they did not
+    # take, and transcript entries that have nothing to do with the target, are
+    # not part of it.
+    on_a_path = get_relevant_courses(graph(), target, set())
+    chosen = (on_a_path & completed) | {target}
+    edges = subgraph_edges(chosen)
+    node_depths = depths(chosen, edges)
+
+    # The target is where the path ends, so it belongs on the bottom row even
+    # when nothing chosen so far is a direct prerequisite of it.
+    others = [depth for code, depth in node_depths.items() if code != target]
+    if others:
+        node_depths[target] = max(node_depths[target], max(others) + 1)
 
     def state_of(code: str) -> str:
         if code in completed:
@@ -207,7 +220,7 @@ def plan(request: PlanRequest) -> dict:
                     'state': state_of(code),
                     'target': code == target,
                 }
-                for code in sorted(relevant, key=lambda c: (node_depths[c], c))
+                for code in sorted(chosen, key=lambda c: (node_depths[c], c))
             ],
             'edges': [{'from': prereq, 'to': course_code} for prereq, course_code in edges],
         },

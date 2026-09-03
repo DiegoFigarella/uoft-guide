@@ -91,7 +91,7 @@ export default function PrereqGraph({
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`Prerequisite graph: ${nodes.length} courses, ${edges.length} prerequisite links. The same courses are listed as text above.`}
+        aria-label={`Your path: ${nodes.length} courses, ${edges.length} prerequisite links. The same courses are listed as chips above.`}
       >
         <g>
           {edges.map(({ from, to }) => {

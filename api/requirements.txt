@@ -1,4 +1,6 @@
 fastapi
 httpx
+psycopg[binary]
 pydantic
+python-dotenv
 uvicorn

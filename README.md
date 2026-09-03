@@ -14,7 +14,7 @@ npm run dev
 ```
 
 The Courses tab calls the api at `http://localhost:8000` unless `VITE_API_URL`
-says otherwise.
+says otherwise; copy `.env.example` to `.env` to point it elsewhere.
 
 ## Run the courses api
 
@@ -53,22 +53,37 @@ sql under `supabase/`:
 cd api && python gen_sql.py
 ```
 
-To populate Supabase, run in the SQL editor:
+### Credentials
 
-1. `supabase/migrations/0001_courses.sql` — creates `public.courses` and its
-   public read policy.
-2. `supabase/seed/courses_01.sql` … `courses_11.sql`, in order. They are split
-   because the whole seed is a few megabytes of sql; each file is re-runnable
-   and upserts on `code`.
+Copy `api/.env.example` to `api/.env` and fill it in from the Supabase
+dashboard. `.env` is gitignored. Real environment variables override the file,
+so a hosting platform's own settings still win.
 
-Then point the api at the table:
+| Variable | Where it comes from | Used by |
+| --- | --- | --- |
+| `SUPABASE_URL` | Project Settings → API | the api at startup |
+| `SUPABASE_KEY` | Project Settings → API, anon key | the api at startup |
+| `DATABASE_URL` | Project Settings → Database → Connection string (URI), with your database password | `migrate.py` only |
+
+The anon key is enough: the courses table is public-read and nothing writes
+through the api. Keep the service_role key out of this entirely, and note the
+browser never sees any key — it only talks to the api.
+
+### Push the data to your project
 
 ```bash
-export SUPABASE_URL=https://<project>.supabase.co
-export SUPABASE_KEY=<anon key>
+cd api && python migrate.py
 ```
 
-With those set, the api reads the table at startup and `/health` reports
-`"source": "supabase"`. Without them it falls back to the json file, which is
-what the tests and local development use. The key stays in the api's
-environment; the browser never sees it.
+That runs `supabase/migrations/0001_courses.sql` (the table plus its public
+read policy) and then `supabase/seed/courses_01.sql` … `courses_11.sql` in
+order, and prints the row count it ends with: 5349. It is re-runnable — the
+schema is created only if missing and the seed upserts on `code`.
+
+The seed is split into eleven files because the whole thing is a few megabytes
+of sql; that also means you can paste them into the dashboard's SQL editor by
+hand instead, if you would rather not hand a script your database password.
+
+Once the table is populated, start the api with `api/.env` in place and
+`/health` reports `"source": "supabase"`. Without credentials it falls back to
+the json file, which is what the tests and local development use.

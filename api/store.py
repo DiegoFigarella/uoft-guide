@@ -7,6 +7,7 @@ import json
 import os
 
 import httpx
+from dotenv import load_dotenv
 
 from course_graph import CourseGraph
 from json_to_graph import graph_from_rows
@@ -15,6 +16,10 @@ from json_to_graph import graph_from_rows
 PAGE = 1000
 COLUMNS = 'code,name,hours,description,exclusions,breadth,prereq_tree'
 JSON_FALLBACK = os.path.join(os.path.dirname(__file__), 'data', 'courses.json')
+
+# Credentials live in api/.env, which is not committed. Real environment
+# variables win over the file, so hosting platforms keep working.
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 
 def _fetch_supabase_rows(url: str, key: str) -> list[dict]:

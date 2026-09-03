@@ -173,7 +173,9 @@ def plan(request: PlanRequest) -> dict:
     completed = {code for code in completed if code in graph().vertices}
 
     options = get_next_needed_courses(graph(), target, completed)
-    relevant = get_relevant_courses(graph(), target, completed) | completed | options
+    # Completed courses that lie on a path to the target are already part of
+    # relevant; the rest of a transcript is not, and would only crowd the graph.
+    relevant = get_relevant_courses(graph(), target, completed) | options
     edges = subgraph_edges(relevant)
     node_depths = depths(relevant, edges)
 

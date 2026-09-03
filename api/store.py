@@ -20,8 +20,11 @@ JSON_FALLBACK = os.path.join(os.path.dirname(__file__), 'data', 'courses.json')
 def _fetch_supabase_rows(url: str, key: str) -> list[dict]:
     """Return every row of the courses table, one page at a time.
 
-    Raise RuntimeError if a page comes back short of a full page but the next
-    page still has rows, which would mean a partial graph built silently.
+    Paging stops on an empty page rather than on a short one: a project whose
+    db-max-rows is set below PAGE answers with fewer rows than asked for, and
+    treating that as the end would silently build a partial graph.
+
+    Raise RuntimeError if the table is empty.
     """
     endpoint = url.rstrip('/') + '/rest/v1/courses'
     headers = {'apikey': key, 'Authorization': f'Bearer {key}'}
@@ -38,10 +41,10 @@ def _fetch_supabase_rows(url: str, key: str) -> list[dict]:
             })
             response.raise_for_status()
             page = response.json()
-            rows.extend(page)
-            if len(page) < PAGE:
+            if not page:
                 break
-            offset += PAGE
+            rows.extend(page)
+            offset += len(page)
 
     if not rows:
         raise RuntimeError('Supabase courses table is empty: run the seed sql first')

@@ -20,24 +20,33 @@ def check_supabase_paging() -> None:
     """
     row = json.load(open(store.JSON_FALLBACK, encoding='utf-8'))['CSC207H1']
     table = [row | {'code': f'AAA{i:05d}'} for i in range(1300)]
-    asked: list[int] = []
 
-    def respond(request: httpx.Request) -> httpx.Response:
-        offset = int(request.url.params['offset'])
-        limit = int(request.url.params['limit'])
-        asked.append(offset)
-        return httpx.Response(200, json=table[offset:offset + limit])
+    def fetch(cap: int) -> tuple[list[dict], list[int]]:
+        """Return the rows the store loads from a server capped at cap rows."""
+        asked: list[int] = []
 
-    transport = httpx.MockTransport(respond)
-    real_client = store.httpx.Client
-    store.httpx.Client = functools.partial(real_client, transport=transport)
-    try:
-        rows = store._fetch_supabase_rows('https://example.supabase.co', 'key')
-    finally:
-        store.httpx.Client = real_client
+        def respond(request: httpx.Request) -> httpx.Response:
+            offset = int(request.url.params['offset'])
+            limit = min(int(request.url.params['limit']), cap)
+            asked.append(offset)
+            return httpx.Response(200, json=table[offset:offset + limit])
 
+        transport = httpx.MockTransport(respond)
+        real_client = store.httpx.Client
+        store.httpx.Client = functools.partial(real_client, transport=transport)
+        try:
+            return store._fetch_supabase_rows('https://example.supabase.co', 'key'), asked
+        finally:
+            store.httpx.Client = real_client
+
+    rows, asked = fetch(store.PAGE)
     assert len(rows) == len(table), (len(rows), len(table))
-    assert asked == [0, 1000], asked
+    assert asked == [0, 1000, 1300], asked
+
+    # A project with db-max-rows below PAGE still has to load completely.
+    capped, asked = fetch(500)
+    assert len(capped) == len(table), (len(capped), len(table))
+    assert asked == [0, 500, 1000, 1300], asked
 
 
 def check() -> None:
@@ -67,7 +76,10 @@ def check() -> None:
         assert second['eligible'] and [o['code'] for o in second['options']] == ['CSC207H1'], second
         assert second['credits'] == 1.0, second
         depth = {node['code']: node['depth'] for node in second['graph']['nodes']}
-        assert depth['CSC108H1'] == 0 and depth['CSC207H1'] > depth['CSC148H1'], depth
+        # The graph starts where the student is: CSC148H1 satisfies the branch,
+        # so what sits behind it is not drawn.
+        assert depth['CSC148H1'] == 0 and depth['CSC207H1'] > depth['CSC148H1'], depth
+        assert 'CSC108H1' not in depth, depth
         state = {node['code']: node['state'] for node in second['graph']['nodes']}
         assert state['CSC148H1'] == 'completed' and state['CSC207H1'] == 'option', state
         assert {'from': 'CSC148H1', 'to': 'CSC207H1'} in second['graph']['edges'], second

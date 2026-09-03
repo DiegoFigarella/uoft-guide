@@ -21,8 +21,12 @@ load_dotenv(os.path.join(HERE, '.env'))
 
 def files() -> list[str]:
     """Return the migration and seed files, in the order they must run."""
-    return sorted(glob.glob(os.path.join(SQL, 'migrations', '*.sql'))) + sorted(
-        glob.glob(os.path.join(SQL, 'seed', '*.sql')))
+    return sorted(glob.glob(os.path.join(SQL, 'migrations', '*.sql'))) + seeds()
+
+
+def seeds() -> list[str]:
+    """Return the seed files, which are generated and so may not be there."""
+    return sorted(glob.glob(os.path.join(SQL, 'seed', '*.sql')))
 
 
 def run(dsn: str) -> int:
@@ -44,6 +48,10 @@ def main() -> None:
     dsn = os.environ.get('DATABASE_URL')
     if not dsn:
         raise SystemExit('DATABASE_URL is not set: copy .env.example to .env and fill it in')
+
+    if not seeds():
+        print('no seed files in supabase/seed: run "python gen_sql.py" first '
+              'if the table should be (re)populated')
 
     print(f'applying {len(files())} sql files')
     print(f'{run(dsn)} courses in public.courses')

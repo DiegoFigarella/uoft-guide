@@ -53,6 +53,10 @@ sql under `supabase/`:
 cd api && python gen_sql.py
 ```
 
+The seed files it writes are gitignored: they are a few megabytes of generated
+sql that already lives in the database. Run `gen_sql.py` again whenever you
+need them back.
+
 ### Credentials
 
 Copy `api/.env.example` to `api/.env` and fill it in from the Supabase
@@ -78,9 +82,10 @@ cd api && python migrate.py
 ```
 
 That runs `supabase/migrations/0001_courses.sql` (the table plus its public
-read policy) and then `supabase/seed/courses_01.sql` … `courses_11.sql` in
-order, and prints the row count it ends with: 5349. It is re-runnable — the
-schema is created only if missing and the seed upserts on `code`.
+read policy) and then every `supabase/seed/courses_*.sql` in order, and prints
+the row count it ends with: 5349. It is re-runnable — the schema is created
+only if missing and the seed upserts on `code`. Run `gen_sql.py` first, since
+the seed files are not in the repo.
 
 The seed is split into eleven files because the whole thing is a few megabytes
 of sql; that also means you can paste them into the dashboard's SQL editor by

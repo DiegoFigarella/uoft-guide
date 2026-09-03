@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MeshGradient } from '@paper-design/shaders-react';
 
 import './styles.css';
+import Courses from './Courses';
 import { CATEGORIES, type Item } from './content';
 
 function Button({
@@ -88,7 +89,11 @@ export default function () {
       </header>
 
       <main className="content">
-          {category.sections.length === 0 ? (
+          {/* Courses is the one category that is not a list of links: it is
+              driven by the api in ../api, so it renders itself. */}
+          {activeId === 'courses' ? (
+            <Courses />
+          ) : category.sections.length === 0 ? (
             <p className="empty">Nothing here yet.</p>
           ) : (
             category.sections.map((section) => (

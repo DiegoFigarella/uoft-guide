@@ -4,6 +4,7 @@
 """
 import functools
 import json
+import os
 
 import httpx
 from fastapi.testclient import TestClient
@@ -26,6 +27,8 @@ def check_supabase_paging() -> None:
         asked: list[int] = []
 
         def respond(request: httpx.Request) -> httpx.Response:
+            assert request.headers['apikey'] == 'sb_publishable_key'
+            assert 'authorization' not in request.headers, dict(request.headers)
             offset = int(request.url.params['offset'])
             limit = min(int(request.url.params['limit']), cap)
             asked.append(offset)
@@ -35,7 +38,8 @@ def check_supabase_paging() -> None:
         real_client = store.httpx.Client
         store.httpx.Client = functools.partial(real_client, transport=transport)
         try:
-            return store._fetch_supabase_rows('https://example.supabase.co', 'key'), asked
+            return (store._fetch_supabase_rows('https://example.supabase.co',
+                                               'sb_publishable_key'), asked)
         finally:
             store.httpx.Client = real_client
 
@@ -51,6 +55,10 @@ def check_supabase_paging() -> None:
 
 def check() -> None:
     """Exercise every endpoint and assert the shapes the frontend relies on."""
+    # Always test against the json fallback, whatever api/.env points at.
+    os.environ.pop('SUPABASE_URL', None)
+    os.environ.pop('SUPABASE_KEY', None)
+
     with TestClient(main.app) as client:
         health = client.get('/health').json()
         assert health['courses'] == 5349, health

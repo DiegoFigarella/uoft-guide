@@ -62,12 +62,14 @@ so a hosting platform's own settings still win.
 | Variable | Where it comes from | Used by |
 | --- | --- | --- |
 | `SUPABASE_URL` | Project Settings → API | the api at startup |
-| `SUPABASE_KEY` | Project Settings → API, anon key | the api at startup |
+| `SUPABASE_KEY` | Project Settings → API Keys, publishable key | the api at startup |
 | `DATABASE_URL` | **Connect** button at the top of the dashboard → Session pooler (port 5432), with `[YOUR-PASSWORD]` replaced | `migrate.py` only |
 
-The anon key is enough: the courses table is public-read and nothing writes
-through the api. Keep the service_role key out of this entirely, and note the
-browser never sees any key — it only talks to the api.
+The publishable key (`sb_publishable_…`) is enough: the courses table is
+public-read and nothing writes through the api. A legacy anon key works too.
+Keep the secret key out of this entirely, and note the browser never sees any
+key — it only talks to the api. The key travels in the `apikey` header, not in
+`Authorization`: publishable and secret keys are not JWTs.
 
 ### Push the data to your project
 

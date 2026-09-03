@@ -32,7 +32,9 @@ def _fetch_supabase_rows(url: str, key: str) -> list[dict]:
     Raise RuntimeError if the table is empty.
     """
     endpoint = url.rstrip('/') + '/rest/v1/courses'
-    headers = {'apikey': key, 'Authorization': f'Bearer {key}'}
+    # The key goes in apikey, never in Authorization: publishable and secret
+    # keys are not JWTs, and anything that tries to verify one as a JWT fails.
+    headers = {'apikey': key}
     rows: list[dict] = []
 
     with httpx.Client(timeout=30) as client:
@@ -69,7 +71,15 @@ def load_graph() -> tuple[CourseGraph, str]:
     key = os.environ.get('SUPABASE_KEY')
 
     if url and key:
-        return graph_from_rows(_fetch_supabase_rows(url, key)), 'supabase'
+        try:
+            rows = _fetch_supabase_rows(url, key)
+        except httpx.HTTPError as issue:
+            raise RuntimeError(
+                f'could not read the courses table at {url}: {issue}. '
+                'Check SUPABASE_URL and SUPABASE_KEY in api/.env, or unset them '
+                'to fall back to data/courses.json.'
+            ) from issue
+        return graph_from_rows(rows), 'supabase'
 
     with open(JSON_FALLBACK, encoding='utf-8') as f:
         return graph_from_rows(json.load(f).values()), 'json'

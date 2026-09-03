@@ -63,7 +63,7 @@ so a hosting platform's own settings still win.
 | --- | --- | --- |
 | `SUPABASE_URL` | Project Settings → API | the api at startup |
 | `SUPABASE_KEY` | Project Settings → API, anon key | the api at startup |
-| `DATABASE_URL` | Project Settings → Database → Connection string (URI), with your database password | `migrate.py` only |
+| `DATABASE_URL` | **Connect** button at the top of the dashboard → Session pooler (port 5432), with `[YOUR-PASSWORD]` replaced | `migrate.py` only |
 
 The anon key is enough: the courses table is public-read and nothing writes
 through the api. Keep the service_role key out of this entirely, and note the

@@ -3,6 +3,5 @@ dist/
 .vite/
 __pycache__/
 docs/
-
 .env
 .env.local

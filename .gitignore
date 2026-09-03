@@ -11,3 +11,6 @@ docs/
 # Generated from api/data/courses.json by api/gen_sql.py, and already loaded
 # into Supabase. Regenerate when the course data changes.
 supabase/seed/
+
+# Scratch directory the supabase CLI writes.
+supabase/.temp/

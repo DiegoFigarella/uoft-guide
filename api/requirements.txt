@@ -3,4 +3,5 @@ httpx
 psycopg[binary]
 pydantic
 python-dotenv
+truststore
 uvicorn

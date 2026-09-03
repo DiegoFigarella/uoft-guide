@@ -7,7 +7,14 @@ import json
 import os
 
 import httpx
+import truststore
 from dotenv import load_dotenv
+
+# Verify certificates against the operating system's trust store. Machines
+# behind a TLS-inspecting proxy have that proxy's CA installed there and not in
+# certifi, where https to Supabase fails with "unable to get local issuer
+# certificate".
+truststore.inject_into_ssl()
 
 from course_graph import CourseGraph
 from json_to_graph import graph_from_rows

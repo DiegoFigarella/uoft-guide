@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://uoftguide.com/sitemap.xml
+Sitemap: https://www.uoftguide.com/sitemap.xml

@@ -59,9 +59,10 @@ against about 0.07s for the json, but that is well inside the 300s function
 limit and fluid compute reuses a warm instance across requests, so it is not a
 per-request cost.
 
-If the variables are missing the api falls back to the committed
-`api/data/courses.json` rather than failing, so a credential problem degrades
-to stale data instead of a broken Courses tab.
+The json fallback only applies when both variables are absent. Credentials
+that are set but wrong are an error, not a fallback: the graph stays unloaded,
+`GET /api/health` reports `"source": null` with the reason, and the courses
+endpoints answer 503 while the rest of the site keeps serving.
 
 ## Courses database
 

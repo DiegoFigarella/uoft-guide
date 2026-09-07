@@ -35,10 +35,17 @@ state: dict[str, object] = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Build the course graph before the first request."""
-    course_graph, source = load_graph()
-    state['graph'] = course_graph
-    state['source'] = source
+    """Build the course graph before the first request, or record why it failed.
+
+    This app serves the whole site, not just the api, so an unreachable database
+    must not take the other tabs down with it. A failure here leaves the graph
+    unset and the courses endpoints answering 503, which is the blast radius the
+    api had back when it was deployed on its own.
+    """
+    try:
+        state['graph'], state['source'] = load_graph()
+    except Exception as issue:
+        state['error'] = f'{type(issue).__name__}: {issue}'
     yield
     state.clear()
 
@@ -47,7 +54,9 @@ app = FastAPI(title='UofT CS Guide courses', lifespan=lifespan)
 
 
 def graph() -> CourseGraph:
-    """Return the loaded course graph."""
+    """Return the loaded course graph, or raise a 503 if it never loaded."""
+    if 'graph' not in state:
+        raise HTTPException(status_code=503, detail=f"Courses unavailable. {state.get('error', '')}".strip())
     return state['graph']
 
 
@@ -138,7 +147,13 @@ class PlanRequest(BaseModel):
 
 @app.get('/api/health')
 def health() -> dict:
-    """Return the number of courses loaded and where they came from."""
+    """Return the number of courses loaded and where they came from.
+
+    Answers even when the graph failed to load, so `source` tells you whether
+    production is really reading Supabase and `error` says why it is not.
+    """
+    if 'graph' not in state:
+        return {'courses': 0, 'source': None, 'error': state.get('error')}
     return {'courses': len(graph().vertices), 'source': state['source']}
 
 

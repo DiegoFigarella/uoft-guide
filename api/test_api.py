@@ -13,6 +13,27 @@ import main
 import store
 
 
+def check_unreachable_database() -> None:
+    """A database the api cannot read must not take the rest of the site down.
+
+    This app serves the frontend too, so a failed load has to leave the courses
+    endpoints answering 503 rather than crashing every request.
+    """
+    def explode() -> tuple:
+        raise RuntimeError('could not read the courses table')
+
+    original = main.load_graph
+    main.load_graph = explode
+    try:
+        with TestClient(main.app) as client:
+            health = client.get('/api/health').json()
+            assert health['source'] is None and 'could not read' in health['error'], health
+            assert client.get('/api/courses/search', params={'q': 'csc'}).status_code == 503
+            assert client.post('/api/plan', json={'completed': [], 'target': 'CSC207H1'}).status_code == 503
+    finally:
+        main.load_graph = original
+
+
 def check_supabase_paging() -> None:
     """A table longer than one PostgREST page must still load completely.
 
@@ -105,6 +126,7 @@ def check() -> None:
         assert done['reached'] and done['options'] == [], done
 
     check_supabase_paging()
+    check_unreachable_database()
     print('api ok')
 
 

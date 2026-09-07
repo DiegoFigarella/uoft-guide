@@ -1,0 +1,6 @@
+# Vercel's Python runtime only auto-detects an entrypoint at the project root or
+# in src/ and app/. The api lives in api/, so point at it explicitly. Detecting
+# a FastAPI preset also stops Vercel from turning every other .py file in api/
+# into its own (broken) serverless function.
+[tool.vercel]
+entrypoint = "api.main:app"

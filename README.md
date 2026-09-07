@@ -13,27 +13,27 @@ npm install
 npm run dev
 ```
 
-The Courses tab calls the api at `http://localhost:8000` unless `VITE_API_URL`
-says otherwise; copy `.env.example` to `.env` to point it elsewhere.
+The Courses tab calls `/api`, which Vite proxies to the courses api on
+`http://localhost:8000`. Run both.
 
 ## Run the courses api
 
 ```bash
-cd api
 pip install -r requirements.txt
+cd api
 uvicorn main:app --reload
 python test_api.py     # self-check, exercises every endpoint
 ```
 
-`GET /health` reports how many courses loaded and whether they came from
+`GET /api/health` reports how many courses loaded and whether they came from
 Supabase or the json fallback.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /health` | Course count and data source |
-| `GET /courses/search?q=` | Courses whose code or name matches |
-| `GET /courses/{code}` | One course, with its prerequisite tree |
-| `POST /plan` | `{completed, target}` to the courses takeable now plus the relevant subgraph |
+| `GET /api/health` | Course count and data source |
+| `GET /api/courses/search?q=` | Courses whose code or name matches |
+| `GET /api/courses/{code}` | One course, with its prerequisite tree |
+| `POST /api/plan` | `{completed, target}` to the courses takeable now plus the relevant subgraph |
 
 The graph, the prerequisite logic and the "what can I take next" algorithms come
 from [jaandersonck/csc111-project2](https://github.com/jaandersonck/csc111-project2):
@@ -43,6 +43,20 @@ vendored — this repo replaces them with the Courses tab. Two changes were need
 `get_relevant_courses` now skips prerequisite codes that are not vertices of the
 graph (other campuses), and `graph_from_rows` builds a graph from database rows
 rather than only from a file.
+
+## Deployment
+
+Vercel builds this as one FastAPI app: `pyproject.toml` points the Python
+runtime at `api/main.py`, `vercel.json` runs the Vite build first, and the app
+mounts the resulting `dist/` at `/`. The api and the site therefore share an
+origin, which is why the browser calls a relative `/api` and there is no CORS
+config.
+
+Leave `SUPABASE_URL` and `SUPABASE_KEY` unset on Vercel. Without them the api
+builds its graph from the committed `api/data/courses.json` in about 0.07s
+instead of paging Supabase for about 5.7s on every cold start. The tradeoff is
+that production data is whatever is committed: update `courses.json` and
+redeploy when the courses change.
 
 ## Courses database
 

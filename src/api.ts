@@ -1,7 +1,9 @@
 /* Client for the courses api in ../api. Everything the Courses tab knows about
    courses comes from here, so the shapes below are the api's response shapes. */
 
-const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+// Same origin: in production FastAPI serves this build and the api together,
+// and in dev Vite proxies /api to the local uvicorn.
+const BASE = '/api';
 
 export type CourseSummary = {
   code: string;

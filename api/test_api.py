@@ -60,26 +60,26 @@ def check() -> None:
     os.environ.pop('SUPABASE_KEY', None)
 
     with TestClient(main.app) as client:
-        health = client.get('/health').json()
+        health = client.get('/api/health').json()
         assert health['courses'] == 5349, health
 
-        results = client.get('/courses/search', params={'q': 'csc207'}).json()
+        results = client.get('/api/courses/search', params={'q': 'csc207'}).json()
         assert results[0]['code'] == 'CSC207H1', results
 
-        assert client.get('/courses/NOPE000H1').status_code == 404
+        assert client.get('/api/courses/NOPE000H1').status_code == 404
 
-        detail = client.get('/courses/csc207h1').json()
+        detail = client.get('/api/courses/csc207h1').json()
         assert detail['credits'] == 0.5 and detail['level'] == 200, detail
         assert detail['prereq_tree']['operator'] == 'AND', detail
         assert detail['exclusions'] == ['CSC207H5', 'CSCB07H3'], detail
 
         # Nothing completed: the only move towards CSC207H1 is a first-year course.
-        first = client.post('/plan', json={'completed': [], 'target': 'CSC207H1'}).json()
+        first = client.post('/api/plan', json={'completed': [], 'target': 'CSC207H1'}).json()
         assert not first['reached'] and not first['eligible'], first
         assert {option['code'] for option in first['options']} == {'CSC110Y1', 'CSC108H1'}, first
 
         # One step later the target itself is the option, and depth grows along the chain.
-        second = client.post('/plan', json={'completed': ['csc108h1', 'CSC148H1'],
+        second = client.post('/api/plan', json={'completed': ['csc108h1', 'CSC148H1'],
                                             'target': 'CSC207H1'}).json()
         assert second['eligible'] and [o['code'] for o in second['options']] == ['CSC207H1'], second
         assert second['credits'] == 1.0, second
@@ -91,7 +91,7 @@ def check() -> None:
         assert {'from': 'CSC148H1', 'to': 'CSC207H1'} in second['graph']['edges'], second
 
         # An unrelated course on the transcript is not part of the path.
-        noisy = client.post('/plan', json={'completed': ['CSC108H1', 'ANT100Y1'],
+        noisy = client.post('/api/plan', json={'completed': ['CSC108H1', 'ANT100Y1'],
                                            'target': 'CSC207H1'}).json()
         assert {node['code'] for node in noisy['graph']['nodes']} == {'CSC108H1', 'CSC207H1'}, noisy
         # Nothing completed is a direct prerequisite of the target, and it still
@@ -100,7 +100,7 @@ def check() -> None:
             'CSC108H1': 0, 'CSC207H1': 1}, noisy
 
         # Target already done.
-        done = client.post('/plan', json={'completed': ['CSC207H1'],
+        done = client.post('/api/plan', json={'completed': ['CSC207H1'],
                                           'target': 'CSC207H1'}).json()
         assert done['reached'] and done['options'] == [], done
 

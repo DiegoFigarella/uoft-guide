@@ -7,19 +7,28 @@ Run with:
 
     uvicorn main:app --reload
 """
+import os
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# Vercel imports this module as `api.main`, which puts the project root on the
+# path instead of this folder, so the flat sibling imports below stop resolving.
+# Adding this folder keeps one set of import statements working both there and
+# under `uvicorn main:app` locally.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from algorithms import get_course_codes, get_next_needed_courses, get_relevant_courses, search_courses
 from boolean_list import BooleanList, CreditCondition
 from course_graph import CourseGraph, _CourseVertex
 from store import load_graph
 
-# Vite dev server and the built site. Only origins that need the api.
-ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+# The built frontend, served by this same app in production so the browser
+# calls /api/... on its own origin. Absent in local dev, where Vite serves it.
+DIST = 'dist'
 
 state: dict[str, object] = {}
 
@@ -35,12 +44,6 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title='UofT CS Guide courses', lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ORIGINS,
-    allow_methods=['GET', 'POST'],
-    allow_headers=['*'],
-)
 
 
 def graph() -> CourseGraph:
@@ -133,20 +136,20 @@ class PlanRequest(BaseModel):
     target: str
 
 
-@app.get('/health')
+@app.get('/api/health')
 def health() -> dict:
     """Return the number of courses loaded and where they came from."""
     return {'courses': len(graph().vertices), 'source': state['source']}
 
 
-@app.get('/courses/search')
+@app.get('/api/courses/search')
 def search(q: str = Query(min_length=1), limit: int = Query(default=20, ge=1, le=100)) -> list[dict]:
     """Return courses whose code or name contains q, best matches first."""
     codes = search_courses(graph(), q)[:limit]
     return [summary(graph().get_vertex(code)) for code in codes]
 
 
-@app.get('/courses/{code}')
+@app.get('/api/courses/{code}')
 def course(code: str) -> dict:
     """Return everything known about one course, including its prerequisite tree."""
     found = vertex(code)
@@ -159,7 +162,7 @@ def course(code: str) -> dict:
     }
 
 
-@app.post('/plan')
+@app.post('/api/plan')
 def plan(request: PlanRequest) -> dict:
     """Return the next courses to take towards a target, and the graph of the path.
 
@@ -225,3 +228,10 @@ def plan(request: PlanRequest) -> dict:
             'edges': [{'from': prereq, 'to': course_code} for prereq, course_code in edges],
         },
     }
+
+
+# Declared after every route, so the api always wins over a file of the same
+# name. Vercel promotes these to the CDN at build time; locally dist/ only
+# exists after `npm run build`, and Vite serves the frontend anyway.
+if os.path.isdir(DIST):
+    app.mount('/', StaticFiles(directory=DIST, html=True), name='frontend')

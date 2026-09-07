@@ -402,8 +402,7 @@ export default function Courses() {
         <div className="section">
           <div className="section-label">Courses service</div>
           <p className="detail-desc" role="alert">
-            {error} Start it with <code>uvicorn main:app</code> in the <code>api</code> folder, or
-            point <code>VITE_API_URL</code> at where it runs.
+            {error} Start it with <code>uvicorn main:app</code> in the <code>api</code> folder.
           </p>
         </div>
       )}

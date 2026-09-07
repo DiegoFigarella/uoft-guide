@@ -46,9 +46,9 @@ rather than only from a file.
 
 ## Deployment
 
-Vercel builds this as one FastAPI app: `pyproject.toml` points the Python
-runtime at `api/main.py`, `vercel.json` runs the Vite build first, and the app
-mounts the resulting `dist/` at `/`. The api and the site therefore share an
+Vercel builds this as one FastAPI app: the root `main.py` re-exports the app
+from `api/main.py` so Vercel's entrypoint detection finds it, `vercel.json`
+runs the Vite build first, and the app mounts the resulting `dist/` at `/`. The api and the site therefore share an
 origin, which is why the browser calls a relative `/api` and there is no CORS
 config.
 

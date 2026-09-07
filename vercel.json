@@ -3,7 +3,7 @@
   "framework": "fastapi",
   "buildCommand": "npm ci --include=dev && npm run build",
   "functions": {
-    "api/main.py": {
+    "main.py": {
       "excludeFiles": "{node_modules/**,supabase/**,docs/**,.git/**,**/test_*.py}"
     }
   }

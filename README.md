@@ -52,11 +52,16 @@ mounts the resulting `dist/` at `/`. The api and the site therefore share an
 origin, which is why the browser calls a relative `/api` and there is no CORS
 config.
 
-Leave `SUPABASE_URL` and `SUPABASE_KEY` unset on Vercel. Without them the api
-builds its graph from the committed `api/data/courses.json` in about 0.07s
-instead of paging Supabase for about 5.7s on every cold start. The tradeoff is
-that production data is whatever is committed: update `courses.json` and
-redeploy when the courses change.
+Set `SUPABASE_URL` and `SUPABASE_KEY` in the Vercel project so production
+reads the database, which is the point of having one: course data changes
+without a redeploy. Paging the table costs a few seconds on a cold start
+against about 0.07s for the json, but that is well inside the 300s function
+limit and fluid compute reuses a warm instance across requests, so it is not a
+per-request cost.
+
+If the variables are missing the api falls back to the committed
+`api/data/courses.json` rather than failing, so a credential problem degrades
+to stale data instead of a broken Courses tab.
 
 ## Courses database
 

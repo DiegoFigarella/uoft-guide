@@ -144,6 +144,10 @@ export const CATEGORIES: Category[] = [
             desc: 'undergraduateresearch.utoronto.ca/undergraduate-research-at-u-of-t/undergraduate-research-explorer',
           },
           {
+            title: 'DCS Undergraduate Research Opportunities',
+            desc: 'utoronto.sharepoint.com/sites/ArtSci-DCS-Undergrad/SitePages/Undergraduate-Research-Opportunities.aspx (UofT login required). Active postings from UofT CS faculty.',
+          },
+          {
             title: 'CS Everything but Internships',
             desc: 'github.com/Julian048/CS-Everything-but-Internships (any cs research related can be found here)',
           },
@@ -215,6 +219,10 @@ export const CATEGORIES: Category[] = [
       {
         label: 'UofT programs',
         items: [
+          {
+            title: 'DCS Undergraduate Summer Research Program (UGSRP)',
+            desc: 'web.cs.toronto.edu/undergraduate/ugsrp. (November 28 to January 7). Work with UofT CS faculty, funded through NSERC USRA, UTEA and DCS Awards.',
+          },
           {
             title: 'Research Opportunities Program (ROP)',
             desc: 'artsci.utoronto.ca/current/experiential-learning/research-opportunities/research-opportunities-program (March 16)',

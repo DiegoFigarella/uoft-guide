@@ -57,7 +57,25 @@ function columns(items: Item[]): Item[][] {
 
 export default function () {
   const [activeId, setActiveId] = useState(CATEGORIES[0].id);
+  const [searchQuery, setSearchQuery] = useState('');
   const category = CATEGORIES.find((c) => c.id === activeId)!;
+
+  const trimmedQuery = searchQuery.trim();
+  const lowerQuery = trimmedQuery.toLowerCase();
+  const isSearching = trimmedQuery.length > 0;
+
+  const searchResults = isSearching
+    ? CATEGORIES.filter((c) => c.id !== 'courses').flatMap((cat) =>
+        cat.sections.flatMap((section) =>
+          section.items
+            .filter((item) => (
+              item.title.toLowerCase().includes(lowerQuery) ||
+              item.desc.toLowerCase().includes(lowerQuery)
+            ))
+            .map((item) => ({ item, section: section.label, category: cat }))
+        )
+      )
+    : [];
 
   return (
     <div className="page">
@@ -76,44 +94,68 @@ export default function () {
       <header className="header">
         <h1 className="page-title">UofT CS Guide</h1>
 
+        <input
+          type="search"
+          placeholder="Search resources..."
+          className="search-input"
+          aria-label="Search resources"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
         <nav className="nav">
           {CATEGORIES.map((c) => (
             <Button
               key={c.id}
               label={c.label}
-              active={c.id === activeId}
-              onClick={() => setActiveId(c.id)}
+              active={c.id === activeId && !isSearching}
+              onClick={() => { setActiveId(c.id); setSearchQuery(''); }}
             />
           ))}
         </nav>
       </header>
 
       <main className="content">
-          {/* Courses is the one category that is not a list of links: it is
-              driven by the api in ../api, so it renders itself. */}
-          {activeId === 'courses' ? (
-            <Courses />
-          ) : category.sections.length === 0 ? (
-            <p className="empty">Nothing here yet.</p>
-          ) : (
-            category.sections.map((section) => (
-              <div className="section" key={section.label}>
-                <div className="section-label">{section.label}</div>
-                <div className="cols">
-                  {columns(section.items).map((col, i) => (
-                    <div className="col" key={i}>
-                      {col.map((item) => (
-                        <div className="item" key={item.title}>
-                          <div className="item-title">{item.title}</div>
-                          {item.desc && <div className="item-desc">{linkify(item.desc)}</div>}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+        {isSearching ? (
+          searchResults.length > 0 ? (
+            <div className="search-results">
+              {searchResults.map((result) => (
+                <div className="search-result-item" key={`${result.category.id}-${result.section}-${result.item.title}`}>
+                  <div className="search-result-meta">
+                    <span className="search-result-category">{result.category.label}</span>
+                    <span className="search-result-section">{result.section}</span>
+                  </div>
+                  <div className="item-title">{result.item.title}</div>
+                  {result.item.desc && <div className="item-desc">{linkify(result.item.desc)}</div>}
                 </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty">No results found.</p>
+          )
+        ) : activeId === 'courses' ? (
+          <Courses />
+        ) : category.sections.length === 0 ? (
+          <p className="empty">Nothing here yet.</p>
+        ) : (
+          category.sections.map((section) => (
+            <div className="section" key={section.label}>
+              <div className="section-label">{section.label}</div>
+              <div className="cols">
+                {columns(section.items).map((col, i) => (
+                  <div className="col" key={i}>
+                    {col.map((item) => (
+                      <div className="item" key={item.title}>
+                        <div className="item-title">{item.title}</div>
+                        {item.desc && <div className="item-desc">{linkify(item.desc)}</div>}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-            ))
-          )}
+            </div>
+          ))
+        )}
       </main>
     </div>
   );

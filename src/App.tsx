@@ -157,6 +157,23 @@ export default function () {
           ))
         )}
       </main>
+
+      <footer className="footer">
+        <p>
+          Want to contribute?{' '}
+          <a href="https://github.com/DiegoFigarella/uoft_guide" target="_blank" rel="noreferrer">
+            github.com/DiegoFigarella/uoft_guide
+          </a>
+        </p>
+        <p>
+          Opportunities compiled by Imane Baghouri and Tugra Canbaz. Site design by Diego
+          Figarella. Course planner by Jack Anderson, Efren Medina, Tanish Ariyur and Diego Figarella (
+          <a href="https://github.com/jaandersonck/uoft-course-planner" target="_blank" rel="noreferrer">
+            uoft-course-planner
+          </a>
+          ).
+        </p>
+      </footer>
     </div>
   );
 }

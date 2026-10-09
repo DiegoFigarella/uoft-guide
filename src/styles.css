@@ -190,7 +190,8 @@ body {
   text-underline-offset: 2px;
 }
 
-.item-desc a:hover {
+.item-desc a:hover,
+.footer a:hover {
   text-decoration-color: currentColor;
 }
 
@@ -246,4 +247,22 @@ body {
 
 @media (max-width: 700px) {
   .search-results { padding: 18px 18px; }
+}
+
+/* Fixed row under the scroll area, so credits show on every tab. */
+.footer {
+  flex: none;
+  padding-top: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.footer p { margin: 0; }
+
+.footer a {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: var(--text-dim);
+  text-underline-offset: 2px;
 }

@@ -1,4 +1,4 @@
-# uoft_guide
+# uoft-guide
 
 A guide for UofT computer science students: research programs, internships,
 clubs, resources and other opportunities collected in one place, plus a
